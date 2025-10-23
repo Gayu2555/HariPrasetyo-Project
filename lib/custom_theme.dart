@@ -7,9 +7,7 @@ class CustomTheme {
   static final lightTheme = ThemeData(
     scaffoldBackgroundColor: Colors.white,
     primaryColor: const Color(0xff084f57),
-    // Use GoogleFonts to set the Open Sans text theme globally. This
-    // ensures fonts are available consistently and avoids per-widget
-    // font configuration issues.
+
     textTheme: GoogleFonts.openSansTextTheme().apply(
       bodyColor: Colors.black87,
       displayColor: Colors.black87,

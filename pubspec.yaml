@@ -1,52 +1,49 @@
 name: recipe_app
 description: "A new Flutter project."
 
-publish_to: "none" # <- Hapus ini, kalau mau publish ke pub.dev
+# Prevent publishing to pub.dev
+publish_to: "none" # Remove this line if you want to publish to pub.dev
 
-# PERINGATAN KERASSS!!!!
-# Kalau mau ubah versi package disini, pastikan juga ubah di build.gradle (android/app/build.gradle)
-# Nomor versi harus sesuai antara pubspec.yaml dengan build.gradle
+# ⚠️ WARNING: If you change the version here,
+# make sure to also update it in android/app/build.gradle.
+# The version must match between pubspec.yaml and build.gradle.
 version: 1.0.0+1
 
 environment:
   sdk: ^3.9.2
 
-# Dependencies specify other packages that your package needs in order to work.
-# To automatically upgrade your package dependencies to the latest versions
-# consider running `flutter pub upgrade --major-versions`. Alternatively,
-# dependencies can be manually updated by changing the version numbers below to
-# the latest version available on pub.dev. To see which dependencies have newer
-# versions available, run `flutter pub outdated`.
+# Dependencies specify other packages that your package needs to work.
+# Run `flutter pub upgrade --major-versions` to upgrade dependencies,
+# or `flutter pub outdated` to check for newer versions.
 dependencies:
   flutter:
     sdk: flutter
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   provider: ^6.1.1
   unicons: ^2.1.1
   cached_network_image: ^3.3.0
-  sizer: ^2.0.15 # <- ini penting pastikan pub_get nya berhasil dulu
-  google_fonts: ^6.1.0 # Samakan dengan versi yang ada di di docs nya google Fonts ke Build.gradle, biar gak error.
+  sizer: ^2.0.15 # Important: ensure `flutter pub get` succeeds
+  google_fonts: ^6.1.0 # Match this version with any native references (e.g., in build.gradle) to avoid issues
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  flutter_lints: ^5.0.0 # Recommended lints for good coding practices
 
-# For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
+# For more info on pubspec format, see:
+# https://dart.dev/tools/pub/pubspec
 
-# The following section is specific to Flutter packages.
+# Flutter-specific configuration
 flutter:
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/beverage.png
+    - assets/cake.png
+    - assets/coffee.png
+    - assets/dish.png
+    - assets/fruits.png
+    - assets/lunch-box.png
+    - assets/recipebook.gif
