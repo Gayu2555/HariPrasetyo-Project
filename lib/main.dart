@@ -1,0 +1,38 @@
+// lib/main.dart
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:recipe_app/provider/provider.dart';
+import 'package:sizer/sizer.dart';
+import 'package:recipe_app/custom_theme.dart';
+import 'package:recipe_app/widgets/widgets.dart';
+
+void main() {
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ListOfRecipes()),
+        ChangeNotifierProvider(create: (_) => SavedProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Sizer(
+      builder: (context, orientation, deviceType) {
+        return MaterialApp(
+          title: 'Recipe App',
+          debugShowCheckedModeBanner: false,
+          theme: CustomTheme.lightTheme,
+          // Use the custom bottom navigation bar as the app home
+          home: const CustomNavBar(),
+        );
+      },
+    );
+  }
+}
