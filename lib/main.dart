@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:recipe_app/provider/provider.dart';
 import 'package:sizer/sizer.dart';
 import 'package:recipe_app/custom_theme.dart';
-import 'package:recipe_app/widgets/widgets.dart';
+import 'package:recipe_app/screens/home_screen.dart';
 
 void main() {
   runApp(
@@ -29,8 +29,10 @@ class MyApp extends StatelessWidget {
           title: 'Recipe App',
           debugShowCheckedModeBanner: false,
           theme: CustomTheme.lightTheme,
-          // Use the custom bottom navigation bar as the app home
-          home: const CustomNavBar(),
+          // Pastikan home widget tidak null dan properly defined
+          home: const HomeScreen(),
+          // Tambahkan fallback untuk navigasi yang aman
+          navigatorKey: GlobalKey<NavigatorState>(),
         );
       },
     );
