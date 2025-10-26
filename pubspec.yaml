@@ -25,6 +25,7 @@ dependencies:
   cached_network_image: ^3.3.0
   sizer: ^2.0.15 # Important: ensure `flutter pub get` succeeds
   google_fonts: ^6.1.0 # Match this version with any native references (e.g., in build.gradle) to avoid issues
+  image_picker: ^1.0.4
 
 dev_dependencies:
   flutter_test:

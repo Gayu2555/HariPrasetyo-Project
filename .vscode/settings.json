@@ -1,0 +1,45 @@
+{
+  "cmake.sourceDirectory": "D:/HariGaming/recipe_app/windows",
+  "sqltools.connections": [
+    {
+      "mysqlOptions": {
+        "authProtocol": "default",
+        "enableSsl": "Disabled"
+      },
+      "ssh": "Enabled",
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 3306,
+      "sshOptions": {
+        "port": 22,
+        "host": "192.168.1.6",
+        "username": "gayu123",
+        "password": "gayu123777"
+      },
+      "driver": "MariaDB",
+      "name": "hari-backend",
+      "username": "gayu123",
+      "database": "hari-backend"
+    },
+    {
+      "mysqlOptions": {
+        "authProtocol": "default",
+        "enableSsl": "Disabled"
+      },
+      "ssh": "Enabled",
+      "previewLimit": 50,
+      "server": "192.168.1.6",
+      "port": 3306,
+      "sshOptions": {
+        "port": 22,
+        "host": "192.168.1.6",
+        "username": "gayu123",
+        "password": "gayu123777"
+      },
+      "driver": "MariaDB",
+      "username": "gayu123",
+      "database": "hari-backend",
+      "name": "hari-backend"
+    }
+  ]
+}
