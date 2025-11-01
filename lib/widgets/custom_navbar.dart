@@ -23,7 +23,7 @@ class CustomNavBarState extends State<CustomNavBar>
   }
 
   final List<GlobalKey<NavigatorState>> _navigatorKeys = List.generate(
-    4,
+    5,
     (index) => GlobalKey<NavigatorState>(),
   );
 
@@ -43,6 +43,8 @@ class CustomNavBarState extends State<CustomNavBar>
   }
 
   void _onItemTapped(int index) {
+    if (index == 2) return;
+
     if (index == _selectedIndex) {
       _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
     } else {
@@ -53,6 +55,12 @@ class CustomNavBarState extends State<CustomNavBar>
     }
   }
 
+  void _navigateToAddRecipe() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const AddRecipeScreen()),
+    );
+  }
+
   Widget _buildOffstageNavigator(int index) {
     Widget child;
     switch (index) {
@@ -60,12 +68,12 @@ class CustomNavBarState extends State<CustomNavBar>
         child = const HomeScreen();
         break;
       case 1:
-        child = const CategoryScreen();
-        break;
-      case 2:
-        child = const SavedScreen();
+        child = const CategoryScreen(categoryName: 'All'); // ✅ DIPERBAIKI
         break;
       case 3:
+        child = const SavedScreen();
+        break;
+      case 4:
         child = const ProfileScreen();
         break;
       default:
@@ -84,9 +92,8 @@ class CustomNavBarState extends State<CustomNavBar>
   }
 
   Future<bool> _onWillPop() async {
-    final isFirstRouteInCurrentTab = !await _navigatorKeys[_selectedIndex]
-        .currentState!
-        .maybePop();
+    final isFirstRouteInCurrentTab =
+        !await _navigatorKeys[_selectedIndex].currentState!.maybePop();
     if (isFirstRouteInCurrentTab) {
       if (_selectedIndex != 0) {
         setState(() {
@@ -104,8 +111,16 @@ class CustomNavBarState extends State<CustomNavBar>
       onWillPop: _onWillPop,
       child: Scaffold(
         backgroundColor: const Color(0xFFF8F9FA),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _navigateToAddRecipe,
+          backgroundColor: Theme.of(context).primaryColor,
+          child: const Icon(UniconsLine.plus, color: Colors.white),
+          elevation: 4.0,
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         extendBody: true,
         bottomNavigationBar: Container(
+          margin: const EdgeInsets.only(bottom: 8.0),
           decoration: BoxDecoration(
             boxShadow: [
               BoxShadow(
@@ -123,7 +138,8 @@ class CustomNavBarState extends State<CustomNavBar>
             child: BottomNavigationBar(
               backgroundColor: Colors.white,
               elevation: 0,
-              currentIndex: _selectedIndex,
+              currentIndex:
+                  _selectedIndex > 2 ? _selectedIndex + 1 : _selectedIndex,
               onTap: _onItemTapped,
               showSelectedLabels: true,
               showUnselectedLabels: true,
@@ -143,26 +159,19 @@ class CustomNavBarState extends State<CustomNavBar>
               items: [
                 _buildNavItem(icon: UniconsLine.home, label: 'Home', index: 0),
                 _buildNavItem(
-                  icon: UniconsLine.apps,
-                  label: 'Category',
-                  index: 1,
-                ),
+                    icon: UniconsLine.apps, label: 'Category', index: 1),
+                const BottomNavigationBarItem(
+                    icon: SizedBox.shrink(), label: ''),
                 _buildNavItem(
-                  icon: UniconsLine.bookmark,
-                  label: 'Saved',
-                  index: 2,
-                ),
+                    icon: UniconsLine.bookmark, label: 'Saved', index: 3),
                 _buildNavItem(
-                  icon: UniconsLine.user,
-                  label: 'Profile',
-                  index: 3,
-                ),
+                    icon: UniconsLine.user, label: 'Profile', index: 4),
               ],
             ),
           ),
         ),
         body: Stack(
-          children: List.generate(4, (index) => _buildOffstageNavigator(index)),
+          children: List.generate(5, (index) => _buildOffstageNavigator(index)),
         ),
       ),
     );
@@ -192,7 +201,6 @@ class CustomNavBarState extends State<CustomNavBar>
   }
 }
 
-//Modern Minimalist Bottom Bar
 class MinimalistNavBar extends StatefulWidget {
   const MinimalistNavBar({Key? key}) : super(key: key);
 
@@ -218,6 +226,12 @@ class MinimalistNavBarState extends State<MinimalistNavBar> {
     }
   }
 
+  void _navigateToAddRecipe() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const AddRecipeScreen()),
+    );
+  }
+
   Widget _buildOffstageNavigator(int index) {
     Widget child;
     switch (index) {
@@ -225,7 +239,7 @@ class MinimalistNavBarState extends State<MinimalistNavBar> {
         child = const HomeScreen();
         break;
       case 1:
-        child = const CategoryScreen();
+        child = const CategoryScreen(categoryName: 'All'); // ✅ DIPERBAIKI
         break;
       case 2:
         child = const SavedScreen();
@@ -249,9 +263,8 @@ class MinimalistNavBarState extends State<MinimalistNavBar> {
   }
 
   Future<bool> _onWillPop() async {
-    final isFirstRouteInCurrentTab = !await _navigatorKeys[_selectedIndex]
-        .currentState!
-        .maybePop();
+    final isFirstRouteInCurrentTab =
+        !await _navigatorKeys[_selectedIndex].currentState!.maybePop();
     if (isFirstRouteInCurrentTab) {
       if (_selectedIndex != 0) {
         setState(() {
@@ -287,21 +300,31 @@ class MinimalistNavBarState extends State<MinimalistNavBar> {
             children: [
               _buildNavItem(icon: UniconsLine.home, label: 'Home', index: 0),
               _buildNavItem(
-                icon: UniconsLine.apps,
-                label: 'Category',
-                index: 1,
-              ),
+                  icon: UniconsLine.apps, label: 'Category', index: 1),
+              const SizedBox(width: 56),
               _buildNavItem(
-                icon: UniconsLine.bookmark,
-                label: 'Saved',
-                index: 2,
-              ),
+                  icon: UniconsLine.bookmark, label: 'Saved', index: 2),
               _buildNavItem(icon: UniconsLine.user, label: 'Profile', index: 3),
             ],
           ),
         ),
         body: Stack(
-          children: List.generate(4, (index) => _buildOffstageNavigator(index)),
+          children: [
+            ...List.generate(4, (index) => _buildOffstageNavigator(index)),
+            Positioned(
+              bottom: 90.0,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: FloatingActionButton(
+                  onPressed: _navigateToAddRecipe,
+                  backgroundColor: Theme.of(context).primaryColor,
+                  child: const Icon(UniconsLine.plus, color: Colors.white),
+                  elevation: 4.0,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -333,9 +356,8 @@ class MinimalistNavBarState extends State<MinimalistNavBar> {
           const SizedBox(height: 12.0),
           Icon(
             icon,
-            color: isSelected
-                ? Theme.of(context).primaryColor
-                : Colors.grey[400],
+            color:
+                isSelected ? Theme.of(context).primaryColor : Colors.grey[400],
             size: 26.0,
           ),
           const SizedBox(height: 6.0),

@@ -10,7 +10,8 @@ class RecipeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final popularRecipes = ModalRoute.of(context)!.settings.arguments as Recipe;
+    final recipe = ModalRoute.of(context)!.settings.arguments as Recipe;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: CustomScrollView(
@@ -62,25 +63,44 @@ class RecipeScreen extends StatelessWidget {
               ),
               Padding(
                 padding: const EdgeInsets.only(right: 8.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                child: Consumer<SavedProvider>(
+                  builder: (context, savedProvider, child) {
+                    final isSaved = savedProvider.getSaved.containsKey(
+                      recipe.recipeId.toString(),
+                    );
+
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: IconButton(
-                    icon: const Icon(
-                      UniconsLine.bookmark,
-                      color: Colors.black87,
-                    ),
-                    onPressed: () {},
-                  ),
+                      child: IconButton(
+                        icon: Icon(
+                          isSaved ? UniconsLine.bookmark : UniconsLine.bookmark,
+                          color: isSaved
+                              ? Theme.of(context).primaryColor
+                              : Colors.black87,
+                        ),
+                        onPressed: () {
+                          savedProvider.addAndRemoveFromSaved(
+                            recipe.recipeId.toString(),
+                            recipe.recipeCategory,
+                            recipe.cookTime,
+                            recipe.prepTime,
+                            recipe.recipeImage,
+                            recipe.recipeName,
+                          );
+                        },
+                      ),
+                    );
+                  },
                 ),
               ),
             ],
@@ -89,8 +109,18 @@ class RecipeScreen extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   CachedNetworkImage(
-                    imageUrl: popularRecipes.recipeImage,
+                    imageUrl: recipe.recipeImage,
                     fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      color: Colors.grey[300],
+                      child: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.error),
+                    ),
                   ),
                   Container(
                     decoration: BoxDecoration(
@@ -124,15 +154,15 @@ class RecipeScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(24.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      RecipeAbout(),
-                      SizedBox(height: 24.0),
-                      RecipeStats(),
-                      SizedBox(height: 24.0),
-                      RecipeIngredient(),
-                      SizedBox(height: 24.0),
-                      RecipeMethod(),
-                      SizedBox(height: 40.0),
+                    children: [
+                      RecipeAbout(recipe: recipe),
+                      const SizedBox(height: 24.0),
+                      RecipeStats(recipe: recipe),
+                      const SizedBox(height: 24.0),
+                      RecipeIngredient(recipe: recipe),
+                      const SizedBox(height: 24.0),
+                      RecipeMethod(recipe: recipe),
+                      const SizedBox(height: 40.0),
                     ],
                   ),
                 ),
@@ -146,20 +176,20 @@ class RecipeScreen extends StatelessWidget {
 }
 
 class RecipeAbout extends StatelessWidget {
-  const RecipeAbout({Key? key}) : super(key: key);
+  final Recipe recipe;
+  const RecipeAbout({Key? key, required this.recipe}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final popularRecipes = ModalRoute.of(context)!.settings.arguments as Recipe;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          popularRecipes.recipeName,
+          recipe.recipeName,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            fontSize: 28.0,
-          ),
+                fontWeight: FontWeight.bold,
+                fontSize: 28.0,
+              ),
         ),
         const SizedBox(height: 12.0),
         Container(
@@ -173,11 +203,11 @@ class RecipeAbout extends StatelessWidget {
             ),
           ),
           child: Text(
-            popularRecipes.recipeCategory,
+            recipe.recipeCategory,
             style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-              color: Theme.of(context).primaryColor,
-              fontWeight: FontWeight.w600,
-            ),
+                  color: Theme.of(context).primaryColor,
+                  fontWeight: FontWeight.w600,
+                ),
           ),
         ),
       ],
@@ -186,11 +216,11 @@ class RecipeAbout extends StatelessWidget {
 }
 
 class RecipeStats extends StatelessWidget {
-  const RecipeStats({Key? key}) : super(key: key);
+  final Recipe recipe;
+  const RecipeStats({Key? key, required this.recipe}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final popularRecipes = ModalRoute.of(context)!.settings.arguments as Recipe;
     return Container(
       padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
@@ -210,7 +240,7 @@ class RecipeStats extends StatelessWidget {
           _buildStatItem(
             context,
             icon: UniconsLine.clock,
-            value: '${popularRecipes.prepTime.toStringAsFixed(0)}m',
+            value: '${recipe.prepTime.toStringAsFixed(0)}m',
             label: 'Prep',
             color: const Color(0xFF6C63FF),
           ),
@@ -218,7 +248,7 @@ class RecipeStats extends StatelessWidget {
           _buildStatItem(
             context,
             icon: UniconsLine.fire,
-            value: '${popularRecipes.cookTime.toStringAsFixed(0)}m',
+            value: '${recipe.cookTime.toStringAsFixed(0)}m',
             label: 'Cook',
             color: const Color(0xFFFF6B6B),
           ),
@@ -226,7 +256,7 @@ class RecipeStats extends StatelessWidget {
           _buildStatItem(
             context,
             icon: UniconsLine.users_alt,
-            value: '${popularRecipes.recipeServing}',
+            value: '${recipe.recipeServing}',
             label: 'Servings',
             color: const Color(0xFF4ECDC4),
           ),
@@ -255,16 +285,16 @@ class RecipeStats extends StatelessWidget {
         const SizedBox(height: 8.0),
         Text(
           value,
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
         ),
         const SizedBox(height: 2.0),
         Text(
           label,
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.grey[600],
+              ),
         ),
       ],
     );
@@ -272,11 +302,11 @@ class RecipeStats extends StatelessWidget {
 }
 
 class RecipeIngredient extends StatelessWidget {
-  const RecipeIngredient({Key? key}) : super(key: key);
+  final Recipe recipe;
+  const RecipeIngredient({Key? key, required this.recipe}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final popularRecipes = ModalRoute.of(context)!.settings.arguments as Recipe;
     return Container(
       padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
@@ -311,13 +341,13 @@ class RecipeIngredient extends StatelessWidget {
               Text(
                 'Ingredients',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
             ],
           ),
           const SizedBox(height: 16.0),
-          ...popularRecipes.recipeIngredients.map((ingredient) {
+          ...recipe.recipeIngredients.map((ingredient) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 12.0),
               child: Row(
@@ -340,9 +370,9 @@ class RecipeIngredient extends StatelessWidget {
                   Expanded(
                     child: Text(
                       ingredient,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyLarge?.copyWith(height: 1.5),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            height: 1.5,
+                          ),
                     ),
                   ),
                 ],
@@ -356,11 +386,11 @@ class RecipeIngredient extends StatelessWidget {
 }
 
 class RecipeMethod extends StatelessWidget {
-  const RecipeMethod({Key? key}) : super(key: key);
+  final Recipe recipe;
+  const RecipeMethod({Key? key, required this.recipe}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final popularRecipes = ModalRoute.of(context)!.settings.arguments as Recipe;
     return Container(
       padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
@@ -395,8 +425,8 @@ class RecipeMethod extends StatelessWidget {
               Text(
                 'Cooking Method',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
             ],
           ),
@@ -408,11 +438,11 @@ class RecipeMethod extends StatelessWidget {
               borderRadius: BorderRadius.circular(12.0),
             ),
             child: Text(
-              popularRecipes.recipeMethod,
+              recipe.recipeMethod,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                height: 1.6,
-                color: Colors.grey[800],
-              ),
+                    height: 1.6,
+                    color: Colors.grey[800],
+                  ),
             ),
           ),
         ],

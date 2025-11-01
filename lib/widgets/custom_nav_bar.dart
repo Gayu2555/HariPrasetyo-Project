@@ -61,7 +61,7 @@ class CustomNavBarState extends State<CustomNavBar>
         child = const HomeScreen();
         break;
       case 1:
-        child = const CategoryScreen();
+        child = const CategoryScreen(categoryName: 'All'); // ✅ DIPERBAIKI
         break;
       case 2:
         child = const SavedScreen();
@@ -85,9 +85,8 @@ class CustomNavBarState extends State<CustomNavBar>
   }
 
   Future<bool> _onWillPop() async {
-    final isFirstRouteInCurrentTab = !await _navigatorKeys[_selectedIndex]
-        .currentState!
-        .maybePop();
+    final isFirstRouteInCurrentTab =
+        !await _navigatorKeys[_selectedIndex].currentState!.maybePop();
     if (isFirstRouteInCurrentTab) {
       if (_selectedIndex != 0) {
         setState(() {
@@ -110,7 +109,11 @@ class CustomNavBarState extends State<CustomNavBar>
           onPressed: _navigateToAddRecipe,
           backgroundColor: Theme.of(context).primaryColor,
           elevation: 4,
-          child: const Icon(UniconsLine.plus, color: Colors.white, size: 24),
+          child: const Icon(
+            UniconsLine.plus,
+            color: Colors.white,
+            size: 24,
+          ),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         bottomNavigationBar: BottomAppBar(
@@ -168,7 +171,6 @@ class CustomNavBarState extends State<CustomNavBar>
           onTap: () => _onItemTapped(index),
           borderRadius: BorderRadius.circular(8),
           child: Container(
-            // SOLUSI 4: Padding minimal dan height constraint
             padding: const EdgeInsets.symmetric(vertical: 6.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,

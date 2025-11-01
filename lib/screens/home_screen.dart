@@ -130,8 +130,8 @@ class HomeContent extends StatelessWidget {
                   Text(
                     'Popular Recipes',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   TextButton(
                     onPressed: () {
@@ -190,17 +190,17 @@ class HomeHeaderRow extends StatelessWidget {
               Text(
                 'Good Morning 👋',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500,
-                ),
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
               ),
               const SizedBox(height: 5.0),
               Text(
                 'Devina',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 28.0,
-                ),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 28.0,
+                    ),
               ),
             ],
           ),
@@ -267,9 +267,9 @@ class HomeGrid extends StatelessWidget {
                   Text(
                     iconList[index].text,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12.0,
-                    ),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12.0,
+                        ),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -279,8 +279,8 @@ class HomeGrid extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const CategoryScreen(),
-                  settings: RouteSettings(arguments: items[index].category),
+                  builder: (context) =>
+                      CategoryScreen(categoryName: items[index].category),
                 ),
               );
             },
@@ -298,7 +298,7 @@ class HomeGrid extends StatelessWidget {
 class HomePopularCarousel extends StatefulWidget {
   final List<Recipe> popularRecipes;
   const HomePopularCarousel({Key? key, required this.popularRecipes})
-    : super(key: key);
+      : super(key: key);
 
   @override
   State<HomePopularCarousel> createState() => _HomePopularCarouselState();

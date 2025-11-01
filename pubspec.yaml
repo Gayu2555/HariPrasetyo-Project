@@ -1,24 +1,15 @@
 name: recipe_app
-description: "A new Flutter project."
+description: A new Flutter project.
+publish_to: "none"
 
-# Prevent publishing to pub.dev
-publish_to: "none" # Remove this line if you want to publish to pub.dev
-
-# ⚠️ WARNING: If you change the version here,
-# make sure to also update it in android/app/build.gradle.
-# The version must match between pubspec.yaml and build.gradle.
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.9.2
+  sdk: ^3.0.0
 
-# Dependencies specify other packages that your package needs to work.
-# Run `flutter pub upgrade --major-versions` to upgrade dependencies,
-# or `flutter pub outdated` to check for newer versions.
 dependencies:
   flutter:
     sdk: flutter
-
   cupertino_icons: ^1.0.8
   provider: ^6.1.1
   unicons: ^2.1.1
@@ -27,17 +18,13 @@ dependencies:
   google_fonts: ^6.1.0 # Match this version with any native references (e.g., in build.gradle) to avoid issues
   image_picker: ^1.0.4
   http: ^1.1.0
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_lints: ^4.0.0
 
-  flutter_lints: ^5.0.0 # Recommended lints for good coding practices
-
-# For more info on pubspec format, see:
-# https://dart.dev/tools/pub/pubspec
-
-# Flutter-specific configuration
 flutter:
   uses-material-design: true
 
@@ -49,3 +36,4 @@ flutter:
     - assets/fruits.png
     - assets/lunch-box.png
     - assets/recipebook.gif
+    - assets/logo.jpg

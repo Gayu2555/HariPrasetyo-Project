@@ -24,7 +24,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
   // List untuk ingredients dan steps
   List<TextEditingController> _ingredientControllers = [
-    TextEditingController(),
+    TextEditingController()
   ];
   List<StepItem> _stepItems = [StepItem(controller: TextEditingController())];
 
@@ -152,9 +152,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
       print('Recipe Data: $recipeData');
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Resep berhasil disimpan!')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Resep berhasil disimpan!')),
+      );
 
       Navigator.pop(context);
     }
@@ -359,11 +359,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       child: CircleAvatar(
                         backgroundColor: Colors.black54,
                         child: IconButton(
-                          icon: const Icon(
-                            UniconsLine.camera,
-                            color: Colors.white,
-                            size: 20,
-                          ),
+                          icon: const Icon(UniconsLine.camera,
+                              color: Colors.white, size: 20),
                           onPressed: _pickMainImage,
                         ),
                       ),
@@ -409,7 +406,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         labelText: label,
         hintText: hint,
         prefixIcon: Icon(icon),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         filled: true,
         fillColor: Colors.grey.shade50,
       ),
@@ -432,12 +431,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       value: value,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         filled: true,
         fillColor: Colors.grey.shade50,
       ),
       items: items.map((item) {
-        return DropdownMenuItem(value: item, child: Text(item));
+        return DropdownMenuItem(
+          value: item,
+          child: Text(item),
+        );
       }).toList(),
       onChanged: onChanged,
     );
@@ -511,10 +515,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     const Spacer(),
                     if (_stepItems.length > 1)
                       IconButton(
-                        icon: const Icon(
-                          UniconsLine.trash_alt,
-                          color: Colors.red,
-                        ),
+                        icon: const Icon(UniconsLine.trash_alt,
+                            color: Colors.red),
                         onPressed: () => _removeStep(index),
                       ),
                   ],
@@ -547,10 +549,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     decoration: BoxDecoration(
                       color: Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.grey.shade300,
-                        width: 1.5,
-                      ),
+                      border:
+                          Border.all(color: Colors.grey.shade300, width: 1.5),
                     ),
                     child: _stepItems[index].image != null
                         ? ClipRRect(
@@ -619,7 +619,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       style: OutlinedButton.styleFrom(
         foregroundColor: Theme.of(context).primaryColor,
         side: BorderSide(color: Theme.of(context).primaryColor),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       ),
     );

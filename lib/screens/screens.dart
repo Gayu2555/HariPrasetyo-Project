@@ -4,3 +4,4 @@ export 'profile_screen.dart';
 export 'recipes_screen.dart';
 export 'recipe_screen.dart';
 export 'saved_screens.dart';
+export 'add_recipe.dart';
