@@ -5,3 +5,4 @@ export 'recipes_screen.dart';
 export 'recipe_screen.dart';
 export 'saved_screens.dart';
 export 'add_recipe.dart';
+export 'recipe_detail_screen.dart';

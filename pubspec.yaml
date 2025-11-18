@@ -14,16 +14,29 @@ dependencies:
   provider: ^6.1.1
   unicons: ^2.1.1
   cached_network_image: ^3.3.0
-  sizer: ^2.0.15 # Important: ensure `flutter pub get` succeeds
-  google_fonts: ^6.1.0 # Match this version with any native references (e.g., in build.gradle) to avoid issues
+  sizer: ^2.0.15
+  google_fonts: ^6.1.0
   image_picker: ^1.0.4
   http: ^1.1.0
   shared_preferences: ^2.2.2
+  google_sign_in: ^6.1.5
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  # --- PERUBAHAN PENTING 1: Tambahkan package ini ---
+  flutter_launcher_icons: ^0.13.1
+
+# --- PERUBAHAN PENTING 2: Pastikan konfigurasi ini ada dan indentasinya benar ---
+# Blok ini tidak boleh ada di dalam 'dependencies' atau 'dev_dependencies'
+# Harus sejajar dengan keduanya.
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/logo.jpg"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/logo.jpg"
 
 flutter:
   uses-material-design: true

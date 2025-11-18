@@ -58,10 +58,11 @@ class CustomNavBarState extends State<CustomNavBar>
     Widget child;
     switch (index) {
       case 0:
-        child = const HomeScreen();
+        // ✅ PERBAIKAN: Gunakan HomeContent langsung, bukan HomeScreen
+        child = const HomeContent();
         break;
       case 1:
-        child = const CategoryScreen(categoryName: 'All'); // ✅ DIPERBAIKI
+        child = const CategoryScreen(categoryName: 'All');
         break;
       case 2:
         child = const SavedScreen();
@@ -70,7 +71,7 @@ class CustomNavBarState extends State<CustomNavBar>
         child = const ProfileScreen();
         break;
       default:
-        child = const HomeScreen();
+        child = const HomeContent();
     }
 
     return Offstage(

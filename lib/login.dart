@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:recipe_app/services/api_service.dart';
+import 'package:recipe_app/services/api_service.dart' as authentication;
 import 'package:recipe_app/services/auth_storage.dart';
 import 'package:recipe_app/input_customizado.dart';
 import 'package:recipe_app/widgets/custom_nav_bar.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-// ==================== LOGIN SCREEN ====================
 class Login extends StatefulWidget {
   const Login({super.key});
 
@@ -22,6 +24,13 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
+
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+    serverClientId:
+        '306335516695-tkfmgpkl5fq4edeohb2rcgjfpa96neib.apps.googleusercontent.com',
+  );
 
   @override
   void initState() {
@@ -64,7 +73,7 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
     }
   }
 
-  // Fungsi Login
+  // Fungsi untuk Login
   void _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -157,6 +166,177 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
     }
   }
 
+  // ✅ FIXED: Fungsi Google Sign In dengan debug
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isGoogleLoading = true);
+
+    try {
+      // Sign out from Google first to ensure fresh sign-in
+      await _googleSignIn.signOut();
+
+      // ✅ DEBUG: Cek konfigurasi
+      print('=== GOOGLE SIGN IN CONFIG ===');
+      print('ServerClientId configured: ${_googleSignIn.clientId}');
+
+      // Attempt to sign in
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
+      if (googleUser == null) {
+        // User cancelled the sign-in
+        print('❌ User cancelled Google Sign-In');
+        setState(() => _isGoogleLoading = false);
+        return;
+      }
+
+      print('✅ Google User signed in: ${googleUser.email}');
+
+      // Get authentication tokens
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      // ✅ DEBUG: Cek token
+      print('=== GOOGLE AUTH RESULT ===');
+      print('Email: ${googleUser.email}');
+      print('DisplayName: ${googleUser.displayName}');
+      print('Photo URL: ${googleUser.photoUrl}');
+      print('idToken exists: ${googleAuth.idToken != null}');
+      print('idToken length: ${googleAuth.idToken?.length ?? 0}');
+      if (googleAuth.idToken != null && googleAuth.idToken!.isNotEmpty) {
+        print(
+            'idToken (first 50 chars): ${googleAuth.idToken!.substring(0, googleAuth.idToken!.length > 50 ? 50 : googleAuth.idToken!.length)}...');
+      } else {
+        print('❌ ERROR: idToken is NULL or EMPTY!');
+      }
+      print('accessToken exists: ${googleAuth.accessToken != null}');
+
+      // Validasi idToken
+      if (googleAuth.idToken == null || googleAuth.idToken!.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.error_outline, color: Colors.white),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                        'ID Token kosong! Periksa konfigurasi Google Sign-In'),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        setState(() => _isGoogleLoading = false);
+        return;
+      }
+
+      // Create a map with user data
+      final Map<String, dynamic> userData = {
+        'email': googleUser.email,
+        'name': googleUser.displayName ?? '',
+        'avatar': googleUser.photoUrl ?? '',
+        'idToken': googleAuth.idToken,
+        'accessToken': googleAuth.accessToken,
+      };
+
+      // ✅ DEBUG: Cek data sebelum dikirim
+      print('=== SENDING TO BACKEND ===');
+      print('userData keys: ${userData.keys}');
+      print(
+          'idToken in userData: ${userData['idToken']?.toString().substring(0, 50)}...');
+
+      // Send data to your backend
+      final result = await ApiService.googleSignIn(userData);
+
+      print('=== BACKEND RESPONSE ===');
+      print('Success: ${result['success']}');
+      print('Message: ${result['message']}');
+
+      if (!mounted) return;
+
+      if (result['success']) {
+        // Simpan token dan data user
+        await AuthStorage.saveToken(result['data']['accessToken']);
+        await AuthStorage.saveUser(result['data']['user']);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Text(result['message']),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+
+          // Navigate ke home
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const CustomNavBar()),
+              );
+            }
+          });
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(result['message'])),
+                ],
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('❌ GOOGLE SIGN IN ERROR: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(child: Text('Terjadi kesalahan: $e')),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isGoogleLoading = false);
+      }
+    }
+  }
+
   @override
   void dispose() {
     _controller?.dispose();
@@ -195,18 +375,30 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                   children: [
                     SizedBox(height: size.height * 0.08),
 
-                    // Logo
+                    // Logo - Diubah untuk menampilkan gambar dari assets/logo.jpg
                     Container(
-                      width: 60,
-                      height: 60,
+                      width: 120,
+                      height: 120,
                       decoration: BoxDecoration(
                         color: primaryColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Icon(
-                        Icons.restaurant_menu_rounded,
-                        color: primaryColor,
-                        size: 32,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.asset(
+                          'assets/logo.jpg',
+                          width: 120,
+                          height: 120,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            // Fallback jika gambar tidak dapat dimuat
+                            return Icon(
+                              Icons.restaurant_menu_rounded,
+                              color: primaryColor,
+                              size: 60,
+                            );
+                          },
+                        ),
                       ),
                     ),
 
@@ -379,14 +571,8 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
 
                     // Google Sign In Button
                     _GoogleSignInButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Google Sign In belum tersedia'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
+                      onPressed: _isGoogleLoading ? null : _handleGoogleSignIn,
+                      isLoading: _isGoogleLoading,
                     ),
 
                     const SizedBox(height: 32),
@@ -460,6 +646,14 @@ class _RegisterScreenState extends State<RegisterScreen>
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
+
+  // ✅ FIXED: Google Sign In instance dengan serverClientId
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+    serverClientId:
+        '306335516695-tkfmgpkl5fq4edeohb2rcgjfpa96neib.apps.googleusercontent.com',
+  );
 
   @override
   void initState() {
@@ -506,7 +700,6 @@ class _RegisterScreenState extends State<RegisterScreen>
       if (!mounted) return;
 
       if (result['success']) {
-        // Simpan token dan data user
         await AuthStorage.saveToken(result['data']['accessToken']);
         await AuthStorage.saveUser(result['data']['user']);
 
@@ -528,7 +721,6 @@ class _RegisterScreenState extends State<RegisterScreen>
             ),
           );
 
-          // Navigate ke home
           Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted) {
               Navigator.pushReplacement(
@@ -584,6 +776,146 @@ class _RegisterScreenState extends State<RegisterScreen>
     }
   }
 
+  // ✅ FIXED: Fungsi Google Sign In untuk Register dengan debug
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isGoogleLoading = true);
+
+    try {
+      await _googleSignIn.signOut();
+
+      print('=== REGISTER: GOOGLE SIGN IN CONFIG ===');
+      print('ServerClientId configured: ${_googleSignIn.clientId}');
+
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
+      if (googleUser == null) {
+        print('❌ User cancelled Google Sign-In');
+        setState(() => _isGoogleLoading = false);
+        return;
+      }
+
+      print('✅ Google User signed in: ${googleUser.email}');
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      print('=== REGISTER: GOOGLE AUTH RESULT ===');
+      print('idToken exists: ${googleAuth.idToken != null}');
+      print('idToken length: ${googleAuth.idToken?.length ?? 0}');
+
+      if (googleAuth.idToken == null || googleAuth.idToken!.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.error_outline, color: Colors.white),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                        'ID Token kosong! Periksa konfigurasi Google Sign-In'),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        setState(() => _isGoogleLoading = false);
+        return;
+      }
+
+      final Map<String, dynamic> userData = {
+        'email': googleUser.email,
+        'name': googleUser.displayName ?? '',
+        'avatar': googleUser.photoUrl ?? '',
+        'idToken': googleAuth.idToken,
+        'accessToken': googleAuth.accessToken,
+      };
+
+      final result = await ApiService.googleSignIn(userData);
+
+      if (!mounted) return;
+
+      if (result['success']) {
+        await AuthStorage.saveToken(result['data']['accessToken']);
+        await AuthStorage.saveUser(result['data']['user']);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Text(result['message']),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const CustomNavBar()),
+              );
+            }
+          });
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(result['message'])),
+                ],
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('❌ REGISTER: GOOGLE SIGN IN ERROR: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(child: Text('Terjadi kesalahan: $e')),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isGoogleLoading = false);
+      }
+    }
+  }
+
   @override
   void dispose() {
     _controller?.dispose();
@@ -632,18 +964,30 @@ class _RegisterScreenState extends State<RegisterScreen>
                   children: [
                     SizedBox(height: size.height * 0.02),
 
-                    // Logo
+                    // Logo - Diubah untuk menampilkan gambar dari assets/logo.jpg
                     Container(
-                      width: 60,
-                      height: 60,
+                      width: 120,
+                      height: 120,
                       decoration: BoxDecoration(
                         color: primaryColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Icon(
-                        Icons.restaurant_menu_rounded,
-                        color: primaryColor,
-                        size: 32,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.asset(
+                          'assets/logo.jpg',
+                          width: 120,
+                          height: 120,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            // Fallback jika gambar tidak dapat dimuat
+                            return Icon(
+                              Icons.restaurant_menu_rounded,
+                              color: primaryColor,
+                              size: 60,
+                            );
+                          },
+                        ),
                       ),
                     ),
 
@@ -673,8 +1017,7 @@ class _RegisterScreenState extends State<RegisterScreen>
 
                     // Name Input
                     InputCustomizado(
-                      hint:
-                          'Nama Lengkap', // ✅ Ganti dari 'Username' ke 'Nama Lengkap'
+                      hint: 'Nama Lengkap',
                       obscure: false,
                       icon: const Icon(Icons.person_outline),
                       controller: _usernameController,
@@ -847,14 +1190,8 @@ class _RegisterScreenState extends State<RegisterScreen>
 
                     // Google Sign In Button
                     _GoogleSignInButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Google Sign In belum tersedia'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
+                      onPressed: _isGoogleLoading ? null : _handleGoogleSignIn,
+                      isLoading: _isGoogleLoading,
                     ),
 
                     const SizedBox(height: 32),
@@ -903,10 +1240,12 @@ class _RegisterScreenState extends State<RegisterScreen>
 
 // ==================== GOOGLE SIGN IN BUTTON WIDGET ====================
 class _GoogleSignInButton extends StatelessWidget {
-  final VoidCallback onPressed;
+  final Future<void> Function()? onPressed;
+  final bool isLoading;
 
   const _GoogleSignInButton({
     required this.onPressed,
+    this.isLoading = false,
   });
 
   @override
@@ -925,31 +1264,43 @@ class _GoogleSignInButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.network(
-              'https://www.google.com/favicon.ico',
-              width: 24,
-              height: 24,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(4),
+            isLoading
+                ? SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Theme.of(context).primaryColor,
+                      ),
+                    ),
+                  )
+                : Image.network(
+                    'https://www.google.com/favicon.ico',
+                    width: 24,
+                    height: 24,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Icon(Icons.g_mobiledata, size: 20),
+                      );
+                    },
                   ),
-                  child: const Icon(Icons.g_mobiledata, size: 20),
-                );
-              },
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Lanjutkan dengan Google',
-              style: TextStyle(
-                color: Colors.grey[700],
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
+            if (!isLoading) const SizedBox(width: 12),
+            if (!isLoading)
+              Text(
+                'Lanjutkan dengan Google',
+                style: TextStyle(
+                  color: Colors.grey[700],
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -1018,18 +1369,30 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 children: [
                   SizedBox(height: size.height * 0.05),
 
-                  // Icon
+                  // Icon - Diubah untuk menampilkan gambar dari assets/logo.jpg
                   Container(
-                    width: 60,
-                    height: 60,
+                    width: 120,
+                    height: 120,
                     decoration: BoxDecoration(
                       color: primaryColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: Icon(
-                      Icons.lock_reset_rounded,
-                      color: primaryColor,
-                      size: 32,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.asset(
+                        'assets/logo.jpg',
+                        width: 120,
+                        height: 120,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          // Fallback jika gambar tidak dapat dimuat
+                          return Icon(
+                            Icons.lock_reset_rounded,
+                            color: primaryColor,
+                            size: 60,
+                          );
+                        },
+                      ),
                     ),
                   ),
 

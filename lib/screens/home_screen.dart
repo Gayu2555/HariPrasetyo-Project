@@ -1,17 +1,14 @@
+//lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:unicons/unicons.dart';
-
-// --- IMPORT FILE KAMU ---
 import 'package:recipe_app/provider/provider.dart';
 import 'package:recipe_app/screens/screens.dart';
 import 'package:recipe_app/utils/utils.dart';
 import 'package:recipe_app/widgets/widgets.dart';
 import 'package:recipe_app/models/models.dart';
+import 'package:recipe_app/services/auth_storage.dart';
 
-// ===============================================================
-// 1. HOMESCREEN UTAMA (Mengatur Navigasi)
-// ===============================================================
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
@@ -109,13 +106,13 @@ class HomeContent extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const HomeLogoText(),
-                  const SizedBox(height: 20.0),
-                  const HomeHeaderRow(),
-                  const SizedBox(height: 30.0),
-                  const SearchField(),
-                  const SizedBox(height: 35.0),
+                children: const [
+                  HomeLogoText(),
+                  SizedBox(height: 20.0),
+                  HomeHeaderRow(), // ✅ UDAH PAKE API SEKARANG!
+                  SizedBox(height: 30.0),
+                  SearchField(),
+                  SizedBox(height: 35.0),
                 ],
               ),
             ),
@@ -172,15 +169,91 @@ class HomeContent extends StatelessWidget {
   }
 }
 
-// ===============================================================
-// 4. WIDGET KOMPONEN
-// ===============================================================
-
-class HomeHeaderRow extends StatelessWidget {
+class HomeHeaderRow extends StatefulWidget {
   const HomeHeaderRow({Key? key}) : super(key: key);
 
   @override
+  State<HomeHeaderRow> createState() => _HomeHeaderRowState();
+}
+
+class _HomeHeaderRowState extends State<HomeHeaderRow> {
+  Map<String, dynamic>? _userData;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  // ✅ Load data user dari AuthStorage
+  Future<void> _loadUserData() async {
+    final user = await AuthStorage.getUser();
+    setState(() {
+      _userData = user;
+      _isLoading = false;
+    });
+  }
+
+  // ✅ Method untuk greeting dinamis berdasarkan waktu
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Selamat Pagi 👋';
+    } else if (hour < 17) {
+      return 'Selamat Siang 👋';
+    } else if (hour < 21) {
+      return 'Selamat Malam 👋';
+    } else {
+      return 'Good Night 🌙';
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      // Loading state
+      return Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _getGreeting(),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+                const SizedBox(height: 5.0),
+                Container(
+                  height: 28.0,
+                  width: 120.0,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(4.0),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            height: 55.0,
+            width: 55.0,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.grey[300],
+            ),
+          ),
+        ],
+      );
+    }
+
+    // ✅ Ambil data dari API
+    final userName = _userData?['name'] ?? _userData?['username'] ?? 'User';
+    final userAvatar = _userData?['avatar'];
+
     return Row(
       children: [
         Expanded(
@@ -188,7 +261,7 @@ class HomeHeaderRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Good Morning 👋',
+                _getGreeting(), // ✅ Greeting dinamis
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: Colors.grey[600],
                       fontWeight: FontWeight.w500,
@@ -196,7 +269,7 @@ class HomeHeaderRow extends StatelessWidget {
               ),
               const SizedBox(height: 5.0),
               Text(
-                'Devina',
+                userName, // ✅ Nama dari API
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       fontSize: 28.0,
@@ -220,13 +293,45 @@ class HomeHeaderRow extends StatelessWidget {
               ),
             ],
           ),
-          child: const ProfileImage(
-            height: 55.0,
-            image:
-                'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1740&q=80',
-          ),
+          child: userAvatar != null && userAvatar.isNotEmpty
+              ? ClipOval(
+                  child: Image.network(
+                    userAvatar,
+                    height: 55.0,
+                    width: 55.0,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return _buildAvatarFallback(userName);
+                    },
+                  ),
+                )
+              : _buildAvatarFallback(userName),
         ),
       ],
+    );
+  }
+
+  // ✅ Fallback avatar dengan inisial
+  Widget _buildAvatarFallback(String name) {
+    String initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
+
+    return Container(
+      height: 55.0,
+      width: 55.0,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Theme.of(context).primaryColor.withOpacity(0.1),
+      ),
+      child: Center(
+        child: Text(
+          initial,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).primaryColor,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -279,8 +384,9 @@ class HomeGrid extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      CategoryScreen(categoryName: items[index].category),
+                  builder: (context) => CategoryScreen(
+                    categoryName: items[index].category,
+                  ),
                 ),
               );
             },
@@ -290,10 +396,6 @@ class HomeGrid extends StatelessWidget {
     );
   }
 }
-
-// ===============================================================
-// 5. CAROUSEL WIDGET UNTUK POPULAR RECIPES
-// ===============================================================
 
 class HomePopularCarousel extends StatefulWidget {
   final List<Recipe> popularRecipes;
@@ -311,7 +413,10 @@ class _HomePopularCarouselState extends State<HomePopularCarousel> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(viewportFraction: 0.85, initialPage: 0);
+    _pageController = PageController(
+      viewportFraction: 0.85,
+      initialPage: 0,
+    );
   }
 
   @override
@@ -358,9 +463,9 @@ class _HomePopularCarouselState extends State<HomePopularCarousel> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const RecipeScreen(),
-                          settings: RouteSettings(
-                            arguments: widget.popularRecipes[index],
+                          // Langsung buka RecipeDetailScreen dan kirim objek recipe
+                          builder: (context) => RecipeDetailScreen(
+                            recipe: widget.popularRecipes[index],
                           ),
                         ),
                       );
@@ -441,7 +546,11 @@ class HomeStack extends StatelessWidget {
         borderRadius: BorderRadius.circular(20.0),
         child: Stack(
           children: [
-            ReusableNetworkImage(imageUrl: image, height: 380.0, width: 250.0),
+            SizedBox(
+              height: 380.0,
+              width: 250.0,
+              child: ReusableNetworkImage(imageUrl: image),
+            ),
             Container(
               height: 380.0,
               width: 250.0,

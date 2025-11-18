@@ -20,14 +20,12 @@ class _RecipesScreenState extends State<RecipesScreen> {
   @override
   void initState() {
     super.initState();
-    // Use addPostFrameCallback to access context after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadRecipes();
     });
   }
 
   Future<void> _loadRecipes() async {
-    final categoryName = ModalRoute.of(context)!.settings.arguments as String;
     final recipesProvider = Provider.of<ListOfRecipes>(context, listen: false);
 
     setState(() {
@@ -36,18 +34,24 @@ class _RecipesScreenState extends State<RecipesScreen> {
     });
 
     try {
-      // Load all recipes if not loaded yet
       if (recipesProvider.getRecipes.isEmpty) {
         await recipesProvider.loadRecipes();
+
+        // ✅ DEBUG: Print jumlah resep yang dimuat
+        print('📊 Total recipes loaded: ${recipesProvider.getRecipes.length}');
       }
     } catch (e) {
+      print('❌ Error loading recipes: $e');
       setState(() {
         _error = e.toString();
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      // ✅ PERBAIKAN: Pastikan setState dipanggil untuk rebuild UI
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -165,7 +169,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
                 ),
               )
             else
-              const RecipesListView(),
+              RecipesListView(selectedTab: selectedTabIndex),
           ],
         ),
       ),
@@ -208,186 +212,214 @@ class _RecipesScreenState extends State<RecipesScreen> {
   }
 }
 
-class RecipesListView extends StatefulWidget {
-  const RecipesListView({Key? key}) : super(key: key);
+class RecipesListView extends StatelessWidget {
+  final int selectedTab;
 
-  @override
-  State<RecipesListView> createState() => _RecipesListViewState();
-}
+  const RecipesListView({
+    Key? key,
+    this.selectedTab = 0,
+  }) : super(key: key);
 
-class _RecipesListViewState extends State<RecipesListView> {
   @override
   Widget build(BuildContext context) {
-    final recipesProvider = Provider.of<ListOfRecipes>(context);
-    final categoryName = ModalRoute.of(context)!.settings.arguments as String;
-    final recipeList = recipesProvider.findByCategory(categoryName);
-    final savedProvider = Provider.of<SavedProvider>(context);
+    // ✅ PERBAIKAN: Gunakan Consumer untuk auto-rebuild
+    return Consumer<ListOfRecipes>(
+      builder: (context, recipesProvider, child) {
+        final categoryName =
+            ModalRoute.of(context)!.settings.arguments as String;
+        final allRecipes = recipesProvider.findByCategory(categoryName);
 
-    if (recipeList.isEmpty) {
-      return const SliverFillRemaining(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.restaurant_menu,
-                size: 64,
-                color: Colors.grey,
-              ),
-              SizedBox(height: 16),
-              Text(
-                'No recipes found',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+        // ✅ Filter berdasarkan tab jika diperlukan
+        final recipeList = _filterByTab(allRecipes, selectedTab);
 
-    return SliverPadding(
-      padding: const EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 20.0),
-      sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final recipe = recipeList[index];
-            final isSaved = savedProvider.getSaved.containsKey(
-              recipe.recipeId.toString(),
-            );
+        print('📋 Showing ${recipeList.length} recipes for $categoryName');
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16.0),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(20.0),
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const RecipesScreen(),
-                    settings: RouteSettings(arguments: recipe),
+        if (recipeList.isEmpty) {
+          return const SliverFillRemaining(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.restaurant_menu,
+                    size: 64,
+                    color: Colors.grey,
                   ),
-                ),
-                child: Container(
-                  height: 140.0,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20.0),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                  SizedBox(height: 16),
+                  Text(
+                    'No recipes found',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey,
+                    ),
                   ),
-                  child: Row(
-                    children: [
-                      // Recipe Image
-                      ClipRRect(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(20.0),
-                          bottomLeft: Radius.circular(20.0),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 20.0),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final recipe = recipeList[index];
+
+                return Consumer<SavedProvider>(
+                  builder: (context, savedProvider, _) {
+                    final isSaved = savedProvider.getSaved.containsKey(
+                      recipe.recipeId.toString(),
+                    );
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20.0),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RecipeScreen(),
+                            settings: RouteSettings(arguments: recipe),
+                          ),
                         ),
-                        child: ReusableNetworkImage(
+                        child: Container(
                           height: 140.0,
-                          width: 120.0,
-                          imageUrl: recipe.recipeImage,
-                        ),
-                      ),
-                      // Recipe Info
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                recipe.recipeName,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16.0,
-                                    ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.06),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
                               ),
-                              const SizedBox(height: 12.0),
-                              Row(
-                                children: [
-                                  _buildInfoChip(
-                                    context,
-                                    icon: UniconsLine.clock,
-                                    text:
-                                        '${recipe.prepTime.toStringAsFixed(0)}m',
-                                    color: const Color(0xFF6C63FF),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              // Recipe Image
+                              ClipRRect(
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(20.0),
+                                  bottomLeft: Radius.circular(20.0),
+                                ),
+                                child: SizedBox(
+                                  width: 120.0,
+                                  child: ReusableNetworkImage(
+                                    imageUrl: recipe.recipeImage,
                                   ),
-                                  const SizedBox(width: 8.0),
-                                  _buildInfoChip(
-                                    context,
-                                    icon: UniconsLine.fire,
-                                    text:
-                                        '${recipe.cookTime.toStringAsFixed(0)}m',
-                                    color: const Color(0xFFFF6B6B),
+                                ),
+                              ),
+                              // Recipe Info
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        recipe.recipeName,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16.0,
+                                            ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 12.0),
+                                      Row(
+                                        children: [
+                                          _buildInfoChip(
+                                            context,
+                                            icon: UniconsLine.clock,
+                                            text:
+                                                '${recipe.prepTime.toStringAsFixed(0)}m',
+                                            color: const Color(0xFF6C63FF),
+                                          ),
+                                          const SizedBox(width: 8.0),
+                                          _buildInfoChip(
+                                            context,
+                                            icon: UniconsLine.fire,
+                                            text:
+                                                '${recipe.cookTime.toStringAsFixed(0)}m',
+                                            color: const Color(0xFFFF6B6B),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                ),
+                              ),
+                              // Bookmark Button
+                              Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: isSaved
+                                        ? Theme.of(context)
+                                            .primaryColor
+                                            .withOpacity(0.1)
+                                        : Colors.grey[100],
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: IconButton(
+                                    // ✅ PERBAIKAN: Icon berbeda untuk saved/unsaved
+                                    icon: Icon(
+                                      isSaved
+                                          ? Icons.bookmark
+                                          : Icons.bookmark_border,
+                                      color: isSaved
+                                          ? Theme.of(context).primaryColor
+                                          : Colors.grey[400],
+                                      size: 24.0,
+                                    ),
+                                    onPressed: () {
+                                      savedProvider.addAndRemoveFromSaved(
+                                        recipe.recipeId.toString(),
+                                        recipe.recipeCategory,
+                                        recipe.cookTime,
+                                        recipe.prepTime,
+                                        recipe.recipeImage,
+                                        recipe.recipeName,
+                                      );
+                                    },
+                                  ),
+                                ),
                               ),
                             ],
                           ),
                         ),
                       ),
-                      // Bookmark Button
-                      Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: isSaved
-                                ? Theme.of(context)
-                                    .primaryColor
-                                    .withOpacity(0.1)
-                                : Colors.grey[100],
-                            shape: BoxShape.circle,
-                          ),
-                          child: IconButton(
-                            icon: Icon(
-                              isSaved
-                                  ? UniconsLine.bookmark
-                                  : UniconsLine.bookmark,
-                              color: isSaved
-                                  ? Theme.of(context).primaryColor
-                                  : Colors.grey[400],
-                              size: 24.0,
-                            ),
-                            onPressed: () {
-                              context
-                                  .read<SavedProvider>()
-                                  .addAndRemoveFromSaved(
-                                    recipe.recipeId.toString(),
-                                    recipe.recipeCategory,
-                                    recipe.cookTime,
-                                    recipe.prepTime,
-                                    recipe.recipeImage,
-                                    recipe.recipeName,
-                                  );
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-          childCount: recipeList.length,
-        ),
-      ),
+                    );
+                  },
+                );
+              },
+              childCount: recipeList.length,
+            ),
+          ),
+        );
+      },
     );
+  }
+
+  // ✅ Helper untuk filter berdasarkan tab
+  List<dynamic> _filterByTab(List<dynamic> recipes, int tabIndex) {
+    if (tabIndex == 0) return recipes; // All
+
+    final tabNames = ['', 'Main', 'Appetizer', 'Dessert'];
+    if (tabIndex >= tabNames.length) return recipes;
+
+    return recipes.where((recipe) {
+      final category = recipe.recipeCategory.toLowerCase();
+      return category.contains(tabNames[tabIndex].toLowerCase());
+    }).toList();
   }
 
   Widget _buildInfoChip(

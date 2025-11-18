@@ -4,22 +4,20 @@ import 'package:unicons/unicons.dart';
 
 class ReusableNetworkImage extends StatelessWidget {
   final String imageUrl;
-  final double height;
-  final double width;
+  final BoxFit? fit;
+
+  // ✅ Hapus height & width dari constructor
   const ReusableNetworkImage({
     Key? key,
     required this.imageUrl,
-    required this.height,
-    required this.width,
+    this.fit = BoxFit.cover,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return CachedNetworkImage(
-      height: height,
-      width: width,
       imageUrl: imageUrl,
-      fit: BoxFit.cover,
+      fit: fit,
       progressIndicatorBuilder: (context, url, downloadProgress) => Center(
         child: CircularProgressIndicator(
           value: downloadProgress.progress,
@@ -27,7 +25,7 @@ class ReusableNetworkImage extends StatelessWidget {
         ),
       ),
       errorWidget: (context, url, error) =>
-          const Icon(UniconsLine.exclamation_circle),
+          const Icon(UniconsLine.exclamation_circle, color: Colors.red),
     );
   }
 }

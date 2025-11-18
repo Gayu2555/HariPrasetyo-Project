@@ -1,19 +1,28 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:recipe_app/login.dart';
 import 'package:recipe_app/provider/provider.dart';
 import 'package:sizer/sizer.dart';
 import 'package:recipe_app/custom_theme.dart';
 import 'package:recipe_app/screens/home_screen.dart';
+import 'package:recipe_app/provider/user_provider.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final GoogleSignIn googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+  );
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ListOfRecipes()),
         ChangeNotifierProvider(create: (_) => SavedProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
       ],
-      child: const MyApp(),
+      child: const MyApp(), // Hanya child yang diperlukan di sini
     ),
   );
 }
@@ -29,9 +38,8 @@ class MyApp extends StatelessWidget {
           title: 'Recipe App',
           debugShowCheckedModeBanner: false,
           theme: CustomTheme.lightTheme,
-          // Pastikan home widget tidak null dan properly defined
-          home: const HomeScreen(),
-          // Tambahkan fallback untuk navigasi yang aman
+          // Pilih salah satu: Login() atau HomeScreen() sebagai halaman awal
+          home: const Login(), // atau home: const HomeScreen(),
           navigatorKey: GlobalKey<NavigatorState>(),
         );
       },
