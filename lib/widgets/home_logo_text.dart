@@ -7,48 +7,31 @@ class HomeLogoText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // Logo bulat dengan gradient
-        Container(
-          width: 48.0,
-          height: 48.0,
-          child: Center(
-            // Mengganti Text 'S' dengan Image.asset
-            child: ClipOval(
-              child: Image.asset(
-                'assets/logo.jpg',
-                width: 36.0,
-                height: 36.0,
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12.0),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             RichText(
               text: TextSpan(
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 20.0,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
                 ),
                 children: [
-                  TextSpan(
+                  const TextSpan(
                     text: 'SHARE',
                     style: TextStyle(
                       color: Colors.black87,
                     ),
                   ),
-                  TextSpan(
+                  const TextSpan(
                     text: 'RE',
                     style: TextStyle(
                       color: Colors.red,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  TextSpan(
+                  const TextSpan(
                     text: 'CIPE',
                     style: TextStyle(
                       color: Colors.black87,

@@ -34,9 +34,9 @@ dev_dependencies:
 flutter_launcher_icons:
   android: "ic_launcher"
   ios: true
-  image_path: "assets/logo.jpg"
+  image_path: "assets/logo.png"
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/logo.jpg"
+  adaptive_icon_foreground: "assets/logo.png"
 
 flutter:
   uses-material-design: true
@@ -49,4 +49,4 @@ flutter:
     - assets/fruits.png
     - assets/lunch-box.png
     - assets/recipebook.gif
-    - assets/logo.jpg
+    - assets/logo.png

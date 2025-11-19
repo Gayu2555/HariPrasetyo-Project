@@ -386,7 +386,7 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16),
                         child: Image.asset(
-                          'assets/logo.jpg',
+                          'assets/logo.png',
                           width: 120,
                           height: 120,
                           fit: BoxFit.cover,
@@ -975,7 +975,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16),
                         child: Image.asset(
-                          'assets/logo.jpg',
+                          'assets/logo.png',
                           width: 120,
                           height: 120,
                           fit: BoxFit.cover,
@@ -1380,7 +1380,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: Image.asset(
-                        'assets/logo.jpg',
+                        'assets/logo.png',
                         width: 120,
                         height: 120,
                         fit: BoxFit.cover,
